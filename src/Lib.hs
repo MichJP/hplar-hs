@@ -1,11 +1,12 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Lib
-    ( someFunc
+    ( repl
     ) where
 
 import Text.Parsec
 import Text.Parsec.String
 import Str
+import System.IO (hFlush, stdout)
 
 data Formula a = Const Bool
 
@@ -28,8 +29,15 @@ prettyPrint (Const value) = show value
 eval :: Formula a -> Bool
 eval (Const value) = value
 
-someFunc :: IO ()
-someFunc = case (parse statement "" [str|False|]) of
-  Right st -> do putStrLn . prettyPrint $ st
-                 putStrLn $ " = " ++ (show (eval st))
-  Left _ -> putStrLn "Error"
+repl :: IO ()
+repl =
+  do putStr "|- "
+     hFlush stdout
+     c <- getLine
+     case parse statement "(stdin)" c of
+       Right st -> do putStrLn . prettyPrint $ st
+                      putStrLn $ " = " ++ (show (eval st))
+                      repl
+       Left e -> do putStrLn "Error parsing input:"
+                    print e
+                    repl
