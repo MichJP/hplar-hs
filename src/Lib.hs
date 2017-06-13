@@ -18,7 +18,11 @@ statement =
 prettyPrint :: Formula a -> String
 prettyPrint (Const value) = show value
 
+eval :: Formula a -> Bool
+eval (Const value) = value
+
 someFunc :: IO ()
 someFunc = case (parse statement "" [str|True|]) of
-  Right st -> putStrLn (prettyPrint st)
+  Right st -> do putStrLn . prettyPrint $ st
+                 putStrLn $ " = " ++ (show (eval st))
   Left _ -> putStrLn "Error"
