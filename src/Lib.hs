@@ -36,13 +36,27 @@ repl = runInputT defaultSettings loop
    where
        loop :: InputT IO ()
        loop = do
-           minput <- getInputLine "|- "
+           minput <- getInputLine prompt
            case minput of
                Nothing -> return ()
                Just input -> do
                  case parse statement "(stdin)" input of
-                   Right st -> do outputStrLn . prettyPrint $ st
+                   Right st -> do outputStrLn $ prettyPrint st
                                   outputStrLn $ " = " ++ (show (eval st))
                    Left e -> do outputStrLn "Error parsing input:"
-                                outputStrLn . concatMap messageString . errorMessages $ e
+                                outputStrLn . indent $ show e
                  loop
+
+prompt :: String
+prompt = "|- "
+
+indent :: String -> String
+indent "" = ""
+indent str = '\t' : indent' str
+
+indent' :: String -> String
+indent' "" = ""
+indent' (ch1:ch2:str)
+  | ch1 == '\n' = "\n\t" ++ indent' (ch2:str)
+  | otherwise = ch1 : indent' (ch2:str)
+indent' str = str
