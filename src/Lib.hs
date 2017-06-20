@@ -7,6 +7,8 @@ import Text.Parsec
 import Text.Parsec.String
 import Str
 import System.IO (hFlush, stdout)
+import System.Console.Haskeline
+import Text.ParserCombinators.Parsec.Error
 
 data Formula a = Const Bool
 
@@ -30,14 +32,17 @@ eval :: Formula a -> Bool
 eval (Const value) = value
 
 repl :: IO ()
-repl =
-  do putStr "|- "
-     hFlush stdout
-     c <- getLine
-     case parse statement "(stdin)" c of
-       Right st -> do putStrLn . prettyPrint $ st
-                      putStrLn $ " = " ++ (show (eval st))
-                      repl
-       Left e -> do putStrLn "Error parsing input:"
-                    print e
-                    repl
+repl = runInputT defaultSettings loop
+   where
+       loop :: InputT IO ()
+       loop = do
+           minput <- getInputLine "|- "
+           case minput of
+               Nothing -> return ()
+               Just input -> do
+                 case parse statement "(stdin)" input of
+                   Right st -> do outputStrLn . prettyPrint $ st
+                                  outputStrLn $ " = " ++ (show (eval st))
+                   Left e -> do outputStrLn "Error parsing input:"
+                                outputStrLn . concatMap messageString . errorMessages $ e
+                 loop
