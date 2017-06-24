@@ -63,7 +63,7 @@ repl = runInputT defaultSettings loop
            loop
 
 prompt :: String
-prompt = "|- "
+prompt = "\x22A2 " -- turnstile
 
 indent :: String -> String
 indent "" = ""
