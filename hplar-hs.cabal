@@ -18,7 +18,7 @@ library
   exposed-modules:     Lib
   build-depends:       base >= 4.7 && < 5
                      , template-haskell
-                     , parsec
+                     , megaparsec
                      , haskeline
   default-language:    Haskell2010
 

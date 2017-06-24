@@ -3,27 +3,46 @@ module Lib
     ( repl
     ) where
 
-import Text.Parsec
-import Text.Parsec.String
+
+--import Text.Parsec
+--import Text.Parsec.String
+
+import Control.Monad (void)
+import Text.Megaparsec
+import Text.Megaparsec.Expr
+import Text.Megaparsec.String
+import qualified Text.Megaparsec.Lexer as L
+import Control.Applicative hiding (Const)
+
 import Str
 import System.IO (hFlush, stdout)
 import System.Console.Haskeline
-import Text.ParserCombinators.Parsec.Error
+--import Text.ParserCombinators.Parsec.Error
 
 data Formula a = Const Bool
 
-statement :: GenParser Char st (Formula String)
+statement :: Parser (Formula String)
 statement = constTrue <|> constFalse
 
-constTrue :: GenParser Char st (Formula String)
-constTrue =
-  do string "True"
-     return (Const True)
+-- https://markkarpov.com/megaparsec/parsing-simple-imperative-language.html
 
-constFalse :: GenParser Char st (Formula String)
-constFalse =
-  do string "False"
-     return (Const False)
+sc :: Parser ()
+sc = L.space (void spaceChar) lineCmnt blockCmnt
+  where lineCmnt = empty
+        blockCmnt = empty
+
+symbol :: String -> Parser String
+symbol = L.symbol sc
+
+constTrue :: Parser (Formula String)
+constTrue = do
+  void (symbol "True")
+  return (Const True)
+
+constFalse :: Parser (Formula String)
+constFalse = do
+  void (symbol "False")
+  return (Const False)
 
 prettyPrint :: Formula a -> String
 prettyPrint (Const value) = show value
