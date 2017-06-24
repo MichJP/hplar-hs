@@ -53,18 +53,19 @@ eval (Const value) = value
 repl :: IO ()
 repl = runInputT defaultSettings loop
    where
-       loop :: InputT IO ()
-       loop = do
-           minput <- getInputLine prompt
-           case minput of
-               Nothing -> return ()
-               Just input -> do
-                 case parse statement "(stdin)" input of
-                   Right st -> do outputStrLn $ prettyPrint st
-                                  outputStrLn $ " = " ++ (show (eval st))
-                   Left e -> do outputStrLn "Error parsing input:"
-                                outputStrLn . indent $ show e
-                 loop
+     loop :: InputT IO ()
+     loop = do
+       minput <- getInputLine prompt
+       case minput of
+         Nothing -> return ()
+         Just "" -> loop
+         Just input -> do
+           case parse statement "(stdin)" input of
+             Right st -> do outputStrLn $ prettyPrint st
+                            outputStrLn $ " = " ++ (show (eval st))
+             Left e -> do outputStrLn "Error parsing input:"
+                          outputStrLn . indent $ show e
+           loop
 
 prompt :: String
 prompt = "|- "
