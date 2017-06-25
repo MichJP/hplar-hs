@@ -1,4 +1,3 @@
-{-# LANGUAGE QuasiQuotes #-}
 module Lib
     ( statement
     , prettyPrint
@@ -12,12 +11,27 @@ import Text.Megaparsec.String
 import qualified Text.Megaparsec.Lexer as L
 import Control.Applicative hiding (Const)
 
-data Formula a = Const Bool
+data Formula a = Constant Bool
+               | Not (Formula a)
+               | Connective Op (Formula a) (Formula a)
 
-statement :: Parser (Formula String)
-statement = sc *> (constTrue <|> constFalse) <* eof
+data Op = And | Or
 
 -- https://markkarpov.com/megaparsec/parsing-simple-imperative-language.html
+
+statement :: Parser (Formula a)
+statement = sc *> expr <* eof
+
+expr :: Parser (Formula a)
+expr = makeExprParser constExpr ops
+  where constExpr =   constTrue
+                  <|> constFalse
+        ops = [ [ Prefix (rword "not" *> pure Not)]
+              , [ InfixL (rword "and" *> pure (Connective And))
+                ]
+              , [ InfixL (rword "or" *> pure (Connective Or))
+                ]
+              ]
 
 sc :: Parser ()
 sc = L.space (void spaceChar) lineCmnt blockCmnt
@@ -30,18 +44,24 @@ symbol = L.symbol sc
 rword :: String -> Parser ()
 rword w = string w *> notFollowedBy alphaNumChar *> sc
 
-constTrue :: Parser (Formula String)
+constTrue :: Parser (Formula a)
 constTrue = do
   void (rword "True")
-  return (Const True)
+  return (Constant True)
 
-constFalse :: Parser (Formula String)
+constFalse :: Parser (Formula a)
 constFalse = do
   void (rword "False")
-  return (Const False)
+  return (Constant False)
 
 prettyPrint :: Formula a -> String
-prettyPrint (Const value) = show value
+prettyPrint (Constant value) = show value
+prettyPrint (Not expr) = "not " ++ prettyPrint expr
+prettyPrint (Connective And l r) = prettyPrint l ++ " and " ++ prettyPrint r
+prettyPrint (Connective Or l r) = prettyPrint l ++ " or " ++ prettyPrint r
 
 eval :: Formula a -> Bool
-eval (Const value) = value
+eval (Constant value) = value
+eval (Not expr) = not . eval $ expr
+eval (Connective And l r) = (eval l) && (eval r)
+eval (Connective Or l r) = (eval l) || (eval r)
