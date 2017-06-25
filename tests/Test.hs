@@ -7,7 +7,7 @@ import Lib
 main :: IO ()
 main = void (runTestTT (TestList tests))
 
-mkTest expr expected = TestCase (assertEqual "" (eval <$> (parse statement "" expr)) (Right expected))
+mkTest expr expected = TestCase (assertEqual ""  (Right expected) (eval <$> (parse statement "" expr)))
 
 test1 = TestLabel "test1" $ mkTest "True" True
 test2 = TestLabel "test2" $ mkTest "False" False

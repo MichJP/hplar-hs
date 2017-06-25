@@ -12,12 +12,10 @@ import Text.Megaparsec.String
 import qualified Text.Megaparsec.Lexer as L
 import Control.Applicative hiding (Const)
 
---import Str
-
 data Formula a = Const Bool
 
 statement :: Parser (Formula String)
-statement = sc *> (constTrue <|> constFalse)
+statement = sc *> (constTrue <|> constFalse) <* eof
 
 -- https://markkarpov.com/megaparsec/parsing-simple-imperative-language.html
 
