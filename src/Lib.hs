@@ -23,15 +23,18 @@ statement :: Parser (Formula a)
 statement = sc *> expr <* eof
 
 expr :: Parser (Formula a)
-expr = makeExprParser constExpr ops
-  where constExpr =   constTrue
-                  <|> constFalse
+expr = makeExprParser expr' ops
+  where expr' = try (between (symbol "(") (symbol ")") expr) <|> constExpr
         ops = [ [ Prefix (rword "not" *> pure Not)]
               , [ InfixL (rword "and" *> pure (Connective And))
                 ]
               , [ InfixL (rword "or" *> pure (Connective Or))
                 ]
               ]
+
+constExpr :: Parser (Formula a)
+constExpr =   constTrue
+          <|> constFalse
 
 sc :: Parser ()
 sc = L.space (void spaceChar) lineCmnt blockCmnt
