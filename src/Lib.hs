@@ -17,7 +17,7 @@ import Control.Applicative hiding (Const)
 data Formula a = Const Bool
 
 statement :: Parser (Formula String)
-statement = constTrue <|> constFalse
+statement = sc *> (constTrue <|> constFalse)
 
 -- https://markkarpov.com/megaparsec/parsing-simple-imperative-language.html
 
@@ -29,14 +29,17 @@ sc = L.space (void spaceChar) lineCmnt blockCmnt
 symbol :: String -> Parser String
 symbol = L.symbol sc
 
+rword :: String -> Parser ()
+rword w = string w *> notFollowedBy alphaNumChar *> sc
+
 constTrue :: Parser (Formula String)
 constTrue = do
-  void (symbol "True")
+  void (rword "True")
   return (Const True)
 
 constFalse :: Parser (Formula String)
 constFalse = do
-  void (symbol "False")
+  void (rword "False")
   return (Const False)
 
 prettyPrint :: Formula a -> String
