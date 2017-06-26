@@ -15,7 +15,7 @@ data Formula a = Constant Bool
                | Not (Formula a)
                | Connective Op (Formula a) (Formula a)
 
-data Op = And | Or | Implies
+data Op = And | Or | Implies | Iff
 
 -- https://markkarpov.com/megaparsec/parsing-simple-imperative-language.html
 
@@ -30,7 +30,9 @@ expr = makeExprParser expr' ops
                 ]
               , [ InfixL (rword "or" *> pure (Connective Or))
                 ]
-              , [ InfixL (rword "implies" *> pure (Connective Implies))
+              , [ InfixR (rword "implies" *> pure (Connective Implies))
+                ]
+              , [ InfixR (rword "iff" *> pure (Connective Iff))
                 ]
               ]
 
@@ -65,6 +67,7 @@ prettyPrint (Not expr) = "not " ++ prettyPrint expr
 prettyPrint (Connective And l r) = prettyPrint l ++ " and " ++ prettyPrint r
 prettyPrint (Connective Or l r) = prettyPrint l ++ " or " ++ prettyPrint r
 prettyPrint (Connective Implies l r) = prettyPrint l ++ " implies " ++ prettyPrint r
+prettyPrint (Connective Iff l r) = prettyPrint l ++ " iff " ++ prettyPrint r
 
 eval :: Formula a -> Bool
 eval (Constant value) = value
@@ -72,3 +75,4 @@ eval (Not expr) = not . eval $ expr
 eval (Connective And l r) = (eval l) && (eval r)
 eval (Connective Or l r) = (eval l) || (eval r)
 eval (Connective Implies l r) = if eval l then eval r else True
+eval (Connective Iff l r) = eval l == eval r
