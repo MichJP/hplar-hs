@@ -25,6 +25,10 @@ test13 = TestLabel "imp1" $ mkTest "True implies True" True
 test14 = TestLabel "imp2" $ mkTest "True implies False" False
 test15 = TestLabel "imp3" $ mkTest "False implies True" True
 test16 = TestLabel "imp4" $ mkTest "False implies False" True
+test17 = TestLabel "bicond1" $ mkTest "True iff True" True
+test18 = TestLabel "bicond2" $ mkTest "True iff False" False
+test19 = TestLabel "bicond3" $ mkTest "False iff True" False
+test20 = TestLabel "bicond4" $ mkTest "False iff False" True
 
 tests = [ test1
         , test2
@@ -42,4 +46,8 @@ tests = [ test1
         , test14
         , test15
         , test16
+        , test17
+        , test18
+        , test19
+        , test20
         ]
