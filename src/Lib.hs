@@ -33,8 +33,6 @@ instance Functor Formula where
   fmap f (Not p) = Not (fmap f p)
   fmap f (Connective op p q) = Connective op (fmap f p) (fmap f q)
 
--- https://markkarpov.com/megaparsec/parsing-simple-imperative-language.html
-
 statement :: Parser (Formula a)
 statement = sc *> expr <* eof
 
