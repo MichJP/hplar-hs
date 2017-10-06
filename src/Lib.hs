@@ -3,6 +3,9 @@ module Lib
     , prettyPrint
     , eval
     , Formula(..)
+    , atoms
+    , and'em
+    , or'em
     ) where
 
 import Control.Monad (void)
@@ -97,3 +100,9 @@ atoms (Constant _) = Set.empty
 atoms (Atom x) = Set.singleton x
 atoms (Not p) = atoms p
 atoms (Connective _ p q) = Set.union (atoms p) (atoms q)
+
+or'em :: Formula a -> Formula a -> Formula a
+or'em p q = Connective Or p q
+
+and'em :: Formula a -> Formula a -> Formula a
+and'em p q = Connective And p q
