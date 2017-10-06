@@ -18,27 +18,21 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 
 
-data Formula a = Constant Bool
-               | Atom a
-               | Not (Formula a)
-               | Connective Op (Formula a) (Formula a)
-               deriving (Show)
+data Formula = Constant Bool
+             | Atom String
+             | Not Formula
+             | Connective Op Formula Formula
+             deriving (Show)
 
 data Op = And | Or | Implies | Iff
         deriving (Show)
 
-instance Functor Formula where
-  fmap _ (Constant x) = Constant x
-  fmap f (Atom x) = Atom (f x)
-  fmap f (Not p) = Not (fmap f p)
-  fmap f (Connective op p q) = Connective op (fmap f p) (fmap f q)
-
-statement :: Parser (Formula a)
+statement :: Parser Formula
 statement = sc *> expr <* eof
 
-expr :: Parser (Formula a)
+expr :: Parser Formula
 expr = makeExprParser expr' ops
-  where expr' = try (between (symbol "(") (symbol ")") expr) <|> constExpr
+  where expr' = try (between (symbol "(") (symbol ")") expr) <|> constExpr <|> atomicFormula
         ops = [ [ Prefix (rword "not" *> pure Not)]
               , [ InfixL (rword "and" *> pure (Connective And))
                 ]
@@ -50,9 +44,28 @@ expr = makeExprParser expr' ops
                 ]
               ]
 
-constExpr :: Parser (Formula a)
+constExpr :: Parser Formula
 constExpr =   constTrue
           <|> constFalse
+
+atomicFormula :: Parser Formula
+atomicFormula = do
+  x <- identifier
+  return (Atom x)
+
+rws :: [String] -- list of reserved words
+rws = ["True", "False", "not", "and", "or", "implies", "iff"]
+
+identifier :: Parser String
+identifier = (lexeme . try) (p >>= check)
+  where
+    p       = (:) <$> letterChar <*> many alphaNumChar
+    check x = if x `elem` rws
+                then fail $ "keyword " ++ show x ++ " cannot be an identifier"
+                else return x
+
+lexeme :: Parser a -> Parser a
+lexeme = L.lexeme sc
 
 sc :: Parser ()
 sc = L.space (void spaceChar) lineCmnt blockCmnt
@@ -65,42 +78,42 @@ symbol = L.symbol sc
 rword :: String -> Parser ()
 rword w = string w *> notFollowedBy alphaNumChar *> sc
 
-constTrue :: Parser (Formula a)
+constTrue :: Parser Formula
 constTrue = do
   void (rword "True")
   return (Constant True)
 
-constFalse :: Parser (Formula a)
+constFalse :: Parser Formula
 constFalse = do
   void (rword "False")
   return (Constant False)
 
-prettyPrint :: Show a => Formula a -> String
+prettyPrint :: Formula -> String
 prettyPrint (Constant value) = show value
-prettyPrint (Atom x) = show x
+prettyPrint (Atom x) = x
 prettyPrint (Not expr) = "not " ++ prettyPrint expr
 prettyPrint (Connective And l r) = prettyPrint l ++ " and " ++ prettyPrint r
 prettyPrint (Connective Or l r) = prettyPrint l ++ " or " ++ prettyPrint r
 prettyPrint (Connective Implies l r) = prettyPrint l ++ " implies " ++ prettyPrint r
 prettyPrint (Connective Iff l r) = prettyPrint l ++ " iff " ++ prettyPrint r
 
-eval :: Formula a -> Bool
+eval :: Formula -> Bool
 eval (Constant value) = value
-eval (Atom _x) = error "Unbound variable "
+eval (Atom x) = error ("Unbound variable " ++ x)
 eval (Not expr) = not . eval $ expr
 eval (Connective And l r) = (eval l) && (eval r)
 eval (Connective Or l r) = (eval l) || (eval r)
 eval (Connective Implies l r) = if eval l then eval r else True
 eval (Connective Iff l r) = eval l == eval r
 
-atoms :: Ord a => Formula a -> Set a
+atoms :: Formula -> Set String
 atoms (Constant _) = Set.empty
 atoms (Atom x) = Set.singleton x
 atoms (Not p) = atoms p
 atoms (Connective _ p q) = Set.union (atoms p) (atoms q)
 
-or'em :: Formula a -> Formula a -> Formula a
+or'em :: Formula -> Formula -> Formula
 or'em p q = Connective Or p q
 
-and'em :: Formula a -> Formula a -> Formula a
+and'em :: Formula -> Formula -> Formula
 and'em p q = Connective And p q
