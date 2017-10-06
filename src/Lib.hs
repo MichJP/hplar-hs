@@ -11,6 +11,9 @@ import Text.Megaparsec.Expr
 import Text.Megaparsec.String
 import qualified Text.Megaparsec.Lexer as L
 import Control.Applicative hiding (Const)
+import Data.Set (Set)
+import qualified Data.Set as Set
+
 
 data Formula a = Constant Bool
                | Atom a
@@ -88,3 +91,9 @@ eval (Connective And l r) = (eval l) && (eval r)
 eval (Connective Or l r) = (eval l) || (eval r)
 eval (Connective Implies l r) = if eval l then eval r else True
 eval (Connective Iff l r) = eval l == eval r
+
+atoms :: Ord a => Formula a -> Set a
+atoms (Constant _) = Set.empty
+atoms (Atom x) = Set.singleton x
+atoms (Not p) = atoms p
+atoms (Connective _ p q) = Set.union (atoms p) (atoms q)
