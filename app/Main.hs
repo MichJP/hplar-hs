@@ -17,7 +17,7 @@ main = runInputT defaultSettings loop
       case minput of
         Nothing -> return ()
         Just input -> do
-          when (containsToken input) $ case parse statement "(stdin)" (input) of
+          when (containsToken input) $ case parse statement "(stdin)" input :: Either (ParseError (Token String) Dec) (Formula String) of
             Right st -> do
               outputStrLn $ prettyPrint st
               outputStrLn $ " = " ++ (show (eval st))

@@ -2,6 +2,7 @@ module Lib
     ( statement
     , prettyPrint
     , eval
+    , Formula(..)
     ) where
 
 import Control.Monad (void)
@@ -12,10 +13,19 @@ import qualified Text.Megaparsec.Lexer as L
 import Control.Applicative hiding (Const)
 
 data Formula a = Constant Bool
+               | Atom a
                | Not (Formula a)
                | Connective Op (Formula a) (Formula a)
+               deriving (Show)
 
 data Op = And | Or | Implies | Iff
+        deriving (Show)
+
+instance Functor Formula where
+  fmap _ (Constant x) = Constant x
+  fmap f (Atom x) = Atom (f x)
+  fmap f (Not p) = Not (fmap f p)
+  fmap f (Connective op p q) = Connective op (fmap f p) (fmap f q)
 
 -- https://markkarpov.com/megaparsec/parsing-simple-imperative-language.html
 
@@ -61,8 +71,9 @@ constFalse = do
   void (rword "False")
   return (Constant False)
 
-prettyPrint :: Formula a -> String
+prettyPrint :: Show a => Formula a -> String
 prettyPrint (Constant value) = show value
+prettyPrint (Atom x) = show x
 prettyPrint (Not expr) = "not " ++ prettyPrint expr
 prettyPrint (Connective And l r) = prettyPrint l ++ " and " ++ prettyPrint r
 prettyPrint (Connective Or l r) = prettyPrint l ++ " or " ++ prettyPrint r
@@ -71,6 +82,7 @@ prettyPrint (Connective Iff l r) = prettyPrint l ++ " iff " ++ prettyPrint r
 
 eval :: Formula a -> Bool
 eval (Constant value) = value
+eval (Atom _x) = error "Unbound variable "
 eval (Not expr) = not . eval $ expr
 eval (Connective And l r) = (eval l) && (eval r)
 eval (Connective Or l r) = (eval l) || (eval r)
