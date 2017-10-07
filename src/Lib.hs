@@ -6,6 +6,7 @@ module Lib
     , atoms
     , and'em
     , or'em
+    , getAllValuations
     ) where
 
 import Control.Monad (void)
@@ -16,6 +17,7 @@ import qualified Text.Megaparsec.Lexer as L
 import Control.Applicative hiding (Const)
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
 data Formula = Constant Bool
@@ -106,7 +108,7 @@ eval (Connective Or l r) = (eval l) || (eval r)
 eval (Connective Implies l r) = if eval l then eval r else True
 eval (Connective Iff l r) = eval l == eval r
 
-evalUnder :: Formula -> Map.Map String Bool -> Bool
+evalUnder :: Formula -> Map String Bool -> Bool
 evalUnder (Constant value) _ = value
 evalUnder (Atom x) valuation = case Map.lookup x valuation of
                                  Just v -> v
@@ -128,3 +130,16 @@ or'em p q = Connective Or p q
 
 and'em :: Formula -> Formula -> Formula
 and'em p q = Connective And p q
+
+onallvaluations subfn v ats = case ats of
+                                [] -> subfn v
+                                p:ps -> let v' t q = if q == p then t else v q
+                                        in onallvaluations subfn (v' False) ps
+                                        ++ onallvaluations subfn (v' True) ps
+
+getAllValuations :: Formula -> [Map String Bool]
+getAllValuations p = map Map.fromList variableAssignmentPairs
+  where variables = Set.toList $ atoms p
+        valuationSet = onallvaluations (\ x -> [x]) (\ _ -> False) variables
+        assignments = map (\ (x, y) -> map x y) (zip valuationSet (replicate (length valuationSet) variables))
+        variableAssignmentPairs = map (zip variables) assignments
