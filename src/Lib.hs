@@ -16,7 +16,7 @@ import qualified Text.Megaparsec.Lexer as L
 import Control.Applicative hiding (Const)
 import Data.Set (Set)
 import qualified Data.Set as Set
-
+import qualified Data.Map.Strict as Map
 
 data Formula = Constant Bool
              | Atom String
@@ -105,6 +105,17 @@ eval (Connective And l r) = (eval l) && (eval r)
 eval (Connective Or l r) = (eval l) || (eval r)
 eval (Connective Implies l r) = if eval l then eval r else True
 eval (Connective Iff l r) = eval l == eval r
+
+evalUnder :: Formula -> Map.Map String Bool -> Bool
+evalUnder (Constant value) _ = value
+evalUnder (Atom x) valuation = case Map.lookup x valuation of
+                                 Just v -> v
+                                 Nothing -> error ("Unbound variable " ++ x)
+evalUnder (Not expr) valuation = not $ evalUnder expr valuation
+evalUnder (Connective And l r) valuation = (evalUnder l valuation) && (evalUnder r valuation)
+evalUnder (Connective Or l r) valuation = (evalUnder l valuation) || (evalUnder r valuation)
+evalUnder (Connective Implies l r) valuation = if evalUnder l valuation then evalUnder r valuation else True
+evalUnder (Connective Iff l r) valuation = evalUnder l valuation == evalUnder r valuation
 
 atoms :: Formula -> Set String
 atoms (Constant _) = Set.empty
