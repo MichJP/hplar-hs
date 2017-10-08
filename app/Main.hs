@@ -20,7 +20,8 @@ main = runInputT defaultSettings loop
           when (containsToken input) $ case parse statement "(stdin)" input of
             Right st -> do
               outputStrLn $ prettyPrint st
-              outputStrLn $ " = " ++ (show (eval st))
+              -- outputStrLn $ " = " ++ (show (eval st))
+              outputStrLn $ toTruthTable st
             Left e -> do
               outputStrLn "Error parsing input:"
               outputStrLn . indent $ parseErrorPretty e

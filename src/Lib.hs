@@ -7,6 +7,7 @@ module Lib
     , and'em
     , or'em
     , getAllValuations
+    , toTruthTable
     ) where
 
 import Control.Monad (void)
@@ -15,6 +16,7 @@ import Text.Megaparsec.Expr
 import Text.Megaparsec.String
 import qualified Text.Megaparsec.Lexer as L
 import Control.Applicative hiding (Const)
+import Data.List
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Map.Strict (Map)
@@ -143,3 +145,7 @@ getAllValuations p = map Map.fromList variableAssignmentPairs
         valuationSet = onallvaluations (\ x -> [x]) (\ _ -> False) variables
         assignments = map (\ (x, y) -> map x y) (zip valuationSet (replicate (length valuationSet) variables))
         variableAssignmentPairs = map (zip variables) assignments
+
+toTruthTable :: Formula -> String
+toTruthTable p = intercalate "," variables
+  where variables = Set.toList $ atoms p
