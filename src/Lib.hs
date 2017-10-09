@@ -147,5 +147,15 @@ getAllValuations p = map Map.fromList variableAssignmentPairs
         variableAssignmentPairs = map (zip variables) assignments
 
 toTruthTable :: Formula -> String
-toTruthTable p = intercalate "," variables
+toTruthTable p
+  | null variables = show (eval p)
+  | otherwise = unlines $ [header, separator] ++ body ++ [separator]
   where variables = Set.toList $ atoms p
+        width = 1 + maximum (5 : map length variables)
+        fixw s = s ++ replicate (width - length s) ' '
+        valuations = getAllValuations p
+        mk_row v = ((map (v Map.!) variables), evalUnder p v)
+        rows = map mk_row valuations
+        separator = replicate (width * length variables + 9) '-'
+        header = concatMap fixw variables ++ "| formula"
+        body = map (\ (x, y) -> concatMap (fixw . show) x ++ "| " ++ show y) rows
